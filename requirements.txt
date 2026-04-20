@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pydantic[email]
+email-validator
+psycopg2-binary
+passlib[bcrypt]
+bcrypt==3.2.2
+requests
+python-multipart
+python-dotenv
