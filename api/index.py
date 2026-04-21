@@ -66,12 +66,16 @@ def get_db():
         print("Error conectando a DB:", e)
         raise HTTPException(status_code=500, detail="Error de Base de Datos")
 
+# --- VERIFICACIÓN CON CÓDIGO ---
+class VerifyCode(BaseModel):
+    email: EmailStr
+    code: str
+
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 # Validación de contraseña
-
 def validar_password(password: str):
     # Mínimo 5 caracteres
     if len(password) < 5:
@@ -200,6 +204,9 @@ def forgot_password(req: PasswordReset):
     conn.commit()
     conn.close()
     
+    if not found:
+        raise HTTPException(status_code=404, detail="Correo no registrado en la base de datos.")
+
     if found:
         try:
             msg = MIMEMultipart("alternative")
@@ -237,7 +244,20 @@ def forgot_password(req: PasswordReset):
             print(f"Error enviando mail: {e}")
             raise HTTPException(status_code=500, detail="Error enviando correo")
 
-    return {"msg": "Si el correo existe, se ha enviado un código."}
+    return {"msg": "Código enviado."}
+
+@app.post("/api/verify-code")
+def verify_code(req: VerifyCode):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM users WHERE email = %s AND reset_token = %s", (req.email, req.code))
+    res = cur.fetchone()
+    conn.close()
+    
+    if not res:
+        raise HTTPException(status_code=400, detail="Código de validación incorrecto.")
+    
+    return {"msg": "Código válido"}
 
 # RESET CONFIRM
 @app.post("/api/reset-confirm")
