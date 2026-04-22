@@ -206,7 +206,6 @@ def forgot_password(req: PasswordReset):
     
     if not found:
         raise HTTPException(status_code=404, detail="Correo no registrado en la base de datos.")
-
     if found:
         try:
             msg = MIMEMultipart("alternative")
