@@ -49,7 +49,7 @@ class PasswordResetConfirm(BaseModel):
 # Modelo para el correo de terror
 class GameEmail(BaseModel):
     email: EmailStr
-    nombre_jugador: str = "Jugador" # Usamos 'nombre_jugador' como en tu código
+    nombre_jugador: str = "Jugador" 
 
 # Modelo para guardar progreso
 class GameProgress(BaseModel):
