@@ -55,7 +55,6 @@ class GameEmail(BaseModel):
 class GameProgress(BaseModel):
     user_id: int
     chapter: str
-    stress: int
     decisions: dict
 
 # --- CONEXIÓN DB ---
@@ -167,21 +166,19 @@ def login(user: UserLogin):
     user_id = res[0]
     
     # Buscamos su progreso guardado
-    cur.execute("SELECT current_chapter, stress_level, decisions FROM game_state WHERE user_id = %s", (user_id,))
+    cur.execute("SELECT current_chapter, decisions FROM game_state WHERE user_id = %s", (user_id,))
     estado = cur.fetchone()
     conn.close()
 
     # Preparamos los datos del progreso (por si es su primera vez y está vacío)
     progreso = {
         "capitulo": "prologo",
-        "estres": 0,
         "decisiones": {}
     }
     
     if estado:
         progreso["capitulo"] = estado[0]
-        progreso["estres"] = estado[1]
-        progreso["decisiones"] = estado[2]
+        progreso["decisiones"] = estado[1]
 
     # Devolvemos el OK, los datos y la partida guardada
     return {
@@ -380,16 +377,15 @@ def save_progress(data: GameProgress):
         cursor = conn.cursor()
         
         query = """
-        INSERT INTO game_state (user_id, current_chapter, stress_level, decisions)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO game_state (user_id, current_chapter, decisions)
+        VALUES (%s, %s, %s)
         ON CONFLICT (user_id) DO UPDATE SET
             current_chapter = EXCLUDED.current_chapter,
-            stress_level = EXCLUDED.stress_level,
             decisions = game_state.decisions || EXCLUDED.decisions,
             last_updated = CURRENT_TIMESTAMP;
         """
         # Convertimos el diccionario 'new_decisions' a un string JSON real
-        cursor.execute(query, (data.user_id, data.chapter, data.stress, json.dumps(data.decisions)))
+        cursor.execute(query, (data.user_id, data.chapter, json.dumps(data.decisions)))
         conn.commit()
         conn.close()
         return {"status": "Progreso guardado"}
