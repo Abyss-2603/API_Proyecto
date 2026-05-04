@@ -177,8 +177,8 @@ def login(user: UserLogin):
     }
     
     if estado:
-        progreso["capitulo"] = estado[0]
-        progreso["decisiones"] = estado[1]
+        progreso["capitulo"] = estado[0] if estado[0] else "prologo"
+        progreso["decisiones"] = estado[1] if estado[1] else {}
 
     # Devolvemos el OK, los datos y la partida guardada
     return {
@@ -381,7 +381,7 @@ def save_progress(data: GameProgress):
         VALUES (%s, %s, %s)
         ON CONFLICT (user_id) DO UPDATE SET
             current_chapter = EXCLUDED.current_chapter,
-            decisions = game_state.decisions || EXCLUDED.decisions,
+            decisions = EXCLUDED.decisions,
             last_updated = CURRENT_TIMESTAMP;
         """
         # Convertimos el diccionario 'new_decisions' a un string JSON real
