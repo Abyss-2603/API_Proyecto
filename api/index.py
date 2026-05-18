@@ -76,16 +76,12 @@ def health():
 
 # Validación de contraseña
 def validar_password(password: str):
-    # Mínimo 5 caracteres
     if len(password) < 5:
         return False, "La contraseña debe tener al menos 5 caracteres."
-    # Al menos una mayúscula
     if not any(c.isupper() for c in password):
         return False, "La contraseña debe tener al menos una letra mayúscula."
-    # Al menos un número
     if not any(c.isdigit() for c in password):
         return False, "La contraseña debe tener al menos un número."
-    # Al menos un símbolo (punto, coma, exclamación, etc.)
     if not re.search(r"[.[\],;!@#$%^&*()_+-=]", password):
         return False, "La contraseña debe tener al menos un símbolo (ej: . , ! @)."
     
@@ -151,7 +147,6 @@ def register(user: UserRegister):
         conn.close()
 
 # LOGIN
-# LOGIN MODIFICADO PARA DEVOLVER PARTIDA
 @app.post("/api/login")
 def login(user: UserLogin):
     conn = get_db()
@@ -274,20 +269,6 @@ def reset_confirm(req: PasswordResetConfirm):
     conn.close()
     return {"msg": "Contraseña actualizada"}
 
-# Agarrar ip del usuario y mostrar su ciudad
-@app.get("/api/horror-context")
-def horror_context(request: Request):
-    ip = request.headers.get("x-forwarded-for")
-    if not ip or ip == "127.0.0.1": ip = "83.55.12.1"
-    
-    data = {"city": "Desconocido", "is_night": True}
-    try:
-        geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=2).json()
-        data["city"] = geo.get("city", "tu casa")
-        data["region"] = geo.get("regionName", "algún lugar")
-    except:
-        pass
-    return data
 
 # Correo de terror (Mensaje final de Rocío)
 @app.post("/api/creepy-email")
@@ -365,7 +346,6 @@ def delete_user(user_id: int):
         conn = get_db()
         cursor = conn.cursor()
         
-        # Al borrar el usuario, el 'ON DELETE CASCADE' borra también su game_state
         cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         conn.close()
