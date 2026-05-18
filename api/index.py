@@ -165,12 +165,11 @@ def login(user: UserLogin):
     
     user_id = res[0]
     
-    # Buscamos su progreso guardado
+    # se busca el progreso guardado
     cur.execute("SELECT current_chapter, decisions FROM game_state WHERE user_id = %s", (user_id,))
     estado = cur.fetchone()
     conn.close()
 
-    # Preparamos los datos del progreso (por si es su primera vez y está vacío)
     progreso = {
         "capitulo": "prologo",
         "decisiones": {}
@@ -180,7 +179,6 @@ def login(user: UserLogin):
         progreso["capitulo"] = estado[0] if estado[0] else "prologo"
         progreso["decisiones"] = estado[1] if estado[1] else {}
 
-    # Devolvemos el OK, los datos y la partida guardada
     return {
         "msg": "Login correcto", 
         "user_id": user_id,
@@ -291,62 +289,31 @@ def horror_context(request: Request):
         pass
     return data
 
-# Correo de terror
+# Correo de terror (Mensaje final de Rocío)
 @app.post("/api/creepy-email")
-def send_creepy_email(req: GameEmail, request: Request):
-    ip = request.headers.get("x-forwarded-for")
-    if not ip or ip == "127.0.0.1": 
-        ip = "83.55.12.1" # IP de Madrid por defecto
-
-    loc = {
-        "city": "tu habitación",
-        "region": "algún lugar",
-        "country": "el mundo real"
-    }
-
-    try:
-        res = requests.get(f"http://ip-api.com/json/{ip}?lang=es", timeout=3).json()
-        if res.get("status") == "success":
-            loc["country"] = res.get("country", loc["country"])
-            loc["region"] = res.get("regionName", loc["region"])
-            loc["city"] = res.get("city", loc["city"])
-    except Exception as e:
-        print(f"Fallo al localizar: {e}")
-
+def send_creepy_email(req: GameEmail):
+    
     msg = MIMEMultipart("alternative")
-    msg['Subject'] = "NO MIRES ATRÁS..." 
-    msg['From'] = f"Tu Subconsciente <{MAIL_USERNAME}>"
+    msg['Subject'] = "Ayúdale." 
+    msg['From'] = f"Rocío <{MAIL_USERNAME}>"
     msg['To'] = req.email
 
     html_content = f"""
     <html>
-      <body style="background-color: #080808; color: #b30000; font-family: 'Courier New', monospace; text-align: center; padding: 40px;">
+      <body style="background-color: #050505; color: #dddddd; font-family: 'Courier New', monospace; padding: 40px; text-align: left; line-height: 1.6;">
         
-        <h1 style="font-size: 28px; letter-spacing: 3px;">TE ENCONTRÉ, {req.nombre_jugador.upper()}</h1>
+        <p>Soy Rocío.</p>
         
-        <p style="font-size: 16px; color: #cccccc;">
-          ¿Pensabas que estabas a salvo en <strong>{loc['country']}</strong>?
-        </p>
+        <p>Él no quiere despertar por culpa de lo que me pasó. Sigue eligiendo mentir y ocultarse en ese mundo falso.</p>
         
-        <div style="border: 1px solid #550000; padding: 20px; margin: 20px auto; max-width: 400px; background-color: #1a0000;">
-            <p style="font-size: 18px; margin: 0;">
-              Mis sensores rastrean una señal en la región de <br>
-              <span style="color: #ff0000; font-weight: bold; font-size: 22px;">{loc['region']}</span>
-            </p>
-            <br>
-            <p style="font-size: 16px; margin: 0;">
-              Acercando zoom...<br>
-              Objetivo localizado en: <strong style="color: white;">{loc['city']}</strong>
-            </p>
-        </div>
-
-        <img src="https://media1.tenor.com/m/x8v1o5Q8i48AAAAC/scary-face-scary.gif" width="250" style="border: 3px solid #330000; opacity: 0.8;">
+        <p>Ahora llegará la última decisión.</p>
+        
+        <p>Por favor, <strong>{req.nombre_jugador}</strong>... haz que acepte la verdad.</p>
+        <p>O... elige lo que quieras.</p>
         
         <br><br>
-        <p style="font-size: 12px; color: #444;">
-          IP Rastreada: {ip}<br>
-          No apagues el ordenador.
-        </p>
+        <p style="color: #aa0000; font-style: italic;">No quiero que acabe igual...</p>
+        
       </body>
     </html>
     """
@@ -360,12 +327,11 @@ def send_creepy_email(req: GameEmail, request: Request):
         server.login(MAIL_USERNAME, MAIL_PASSWORD)
         server.sendmail(MAIL_USERNAME, req.email, msg.as_string())
         server.quit()
-        return {
-            "msg": "Correo enviado", 
-            "data_detected": loc
-        }
+        
+        return {"msg": "Correo de Rocío enviado"}
+        
     except Exception as e:
-        print(f"Error enviando creepy mail: {e}")
+        print(f"Error enviando correo de Rocío: {e}")
         return {"msg": "El correo falló, pero el juego continúa"}
 
 
